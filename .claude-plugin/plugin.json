@@ -1,0 +1,11 @@
+{
+  "name": "claude-plugin",
+  "description": "Claude Code plugins by Jonggyu Lee",
+  "author": {
+    "name": "Jonggyu Lee",
+    "email": "jglee1027@gmail.com",
+    "url": "https://github.com/jglee1027"
+  },
+  "repository": "https://github.com/jglee1027/claude-plugin.git",
+  "license": "Apache-2.0"
+}
