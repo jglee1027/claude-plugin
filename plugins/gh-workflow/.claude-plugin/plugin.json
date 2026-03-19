@@ -1,11 +1,11 @@
 {
   "name": "gh-workflow",
   "version": "1.0.0",
-  "description": "GitHub issue management and workflow automation skills — create issues, generate priority reports, and resolve issues with full PR workflow",
+  "description": "GitHub issue and discussion management — create issues, generate priority reports, resolve issues with full PR workflow, and reply to discussions",
   "author": {
     "name": "Jonggyu Lee",
     "url": "https://github.com/jglee1027"
   },
   "license": "Apache-2.0",
-  "keywords": ["github", "issues", "workflow", "automation", "pr"]
+  "keywords": ["github", "issues", "discussions", "workflow", "automation", "pr"]
 }

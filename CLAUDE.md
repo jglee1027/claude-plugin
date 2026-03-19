@@ -18,6 +18,7 @@ plugins/
     skills/
       create-issue/SKILL.md            # git diff 분석 또는 컨텍스트 기반 이슈 생성
       issue-report/SKILL.md            # 오픈 이슈 중요도별 한국어 보고서
+      reply-discussion/SKILL.md        # GitHub Discussion 분석 후 답변 작성·게시
       resolve-issue/SKILL.md           # 이슈 분석 → 구현 → 테스트 → PR 전체 워크플로우
 ```
 

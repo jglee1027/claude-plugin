@@ -42,6 +42,18 @@ A plugin for GitHub issue management and workflow automation.
 /issue-report
 ```
 
+**`/reply-discussion`** — Reply to a GitHub Discussion
+
+- Fetches discussion thread via GraphQL
+- Analyzes the question and researches the codebase for evidence
+- Drafts reply in Korean for maintainer review
+- Translates to the questioner's language and posts after confirmation
+
+```
+/reply-discussion 5
+/reply-discussion https://github.com/owner/repo/discussions/5
+```
+
 **`/resolve-issue`** — Full issue resolution workflow
 
 | Phase | Description |
