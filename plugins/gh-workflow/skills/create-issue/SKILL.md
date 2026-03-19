@@ -1,7 +1,6 @@
 ---
 name: create-issue
 description: Create a GitHub issue. Analyzes git diff automatically if no arguments provided, or uses the given context to create an issue.
-disable-model-invocation: true
 argument-hint: "[optional: issue context or description]"
 allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
 ---

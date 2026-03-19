@@ -1,7 +1,6 @@
 ---
 name: reply-discussion
 description: Reply to a GitHub Discussion by analyzing the codebase, drafting in Korean for review, then posting in the questioner's language
-disable-model-invocation: true
 argument-hint: "[discussion number or URL]"
 ---
 

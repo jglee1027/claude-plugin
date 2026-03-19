@@ -1,7 +1,6 @@
 ---
 name: resolve-issue
 description: Resolve a GitHub issue by analyzing it, implementing the fix, running tests, and creating a PR. Accepts an issue number or context description.
-disable-model-invocation: true
 argument-hint: "[issue number or context description]"
 ---
 
