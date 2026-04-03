@@ -14,19 +14,19 @@ Fetch all open issues from the current GitHub repository and classify them by pr
    gh issue list --state open --limit 100 --json number,title,labels,createdAt,author,assignees,comments,milestone
    ```
 
-2. Classify issues into **High / Medium / Low** priority:
+2. Classify issues by priority using emoji labels for quick visual scanning:
 
-   ### High
+   ### 🔴 P1 — 즉시 대응 필요
    - Issues with `bug` label
    - Runtime crashes, data loss, or security-related issues
    - Issues reported by multiple users
 
-   ### Medium
+   ### 🟡 P2 — 답변/수정 권장
    - Issues with fixes in progress or nearly complete
    - Issues occurring only under specific environments/conditions
    - Work items split into sub-issues
 
-   ### Low
+   ### 🟢 P3 — 여유 있음
    - `enhancement` label (feature requests)
    - `question` label with no analysis yet
    - Improvement requests with no scheduled timeline
@@ -40,22 +40,22 @@ Fetch all open issues from the current GitHub repository and classify them by pr
 
    ---
 
-   ### High Priority
+   ### 🔴 P1 — 즉시 대응 필요
 
    | # | Title | Labels | Assignee | Status |
    |---|---|---|---|---|
    | #number | title | labels | @assignee | status summary |
 
-   **Reason**: (explain why this is high priority)
+   **Reason**: (explain why this is P1)
 
    ---
 
-   ### Medium Priority
+   ### 🟡 P2 — 답변/수정 권장
    (same format)
 
    ---
 
-   ### Low Priority
+   ### 🟢 P3 — 여유 있음
    (same format)
 
    ---
@@ -64,9 +64,9 @@ Fetch all open issues from the current GitHub repository and classify them by pr
 
    | Priority | Count | Key Action |
    |---|---|---|
-   | High | N | recommended action |
-   | Medium | N | recommended action |
-   | Low | N | recommended action |
+   | 🔴 P1 | N | recommended action |
+   | 🟡 P2 | N | recommended action |
+   | 🟢 P3 | N | recommended action |
 
    (include recommendation for the most urgent work)
    ```
