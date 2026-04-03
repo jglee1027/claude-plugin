@@ -8,6 +8,52 @@ argument-hint: "[discussion number or URL]"
 
 You are replying to a GitHub Discussion for the current repository. Follow each phase carefully.
 
+## Phase 0: Triage (when no argument is provided)
+
+If `$ARGUMENTS` is empty (no discussion number or URL given), run this triage phase before proceeding:
+
+1. Fetch the repo owner/name: `gh repo view --json owner,name`
+2. Fetch recent discussions (last 15, ordered by creation date) with comment counts:
+   ```bash
+   gh api graphql -f query='
+   query($owner: String!, $repo: String!) {
+     repository(owner: $owner, name: $repo) {
+       discussions(first: 15, orderBy: {field: CREATED_AT, direction: DESC}) {
+         nodes {
+           number
+           title
+           author { login }
+           createdAt
+           answerChosenAt
+           comments { totalCount }
+           category { name }
+         }
+       }
+     }
+   }' -F owner='{owner}' -F repo='{repo}'
+   ```
+3. For discussions that might need replies (Q&A with 0 comments, unanswered, etc.), fetch the **last comment** of each to determine conversation status:
+   ```bash
+   gh api graphql -f query='...' # use comments(last: 1) with replies(last: 1)
+   ```
+4. Analyze each discussion and present a **triage table in Korean** with:
+   - Discussion number and title
+   - Author and language
+   - Comment count
+   - **Status**: one of:
+     - ✅ **답변 완료** — maintainer answered and questioner confirmed/thanked
+     - ✅ **대화 종료** — conversation naturally concluded
+     - ⚠️ **후속 필요** — someone asked a follow-up or raised a counterpoint with no maintainer response
+     - 🔴 **미답변** — no comments at all on a Q&A discussion
+     - 💤 **토론 중단** — long period of inactivity with no resolution
+   - **Priority**: 높음 / 중간 / 낮음 / 없음
+   - Brief reason for the status/priority assessment
+5. Let the user pick which discussion to reply to (or confirm none need replies)
+
+After the user selects a discussion, proceed to Phase 1 with that number.
+
+---
+
 ## Phase 1: Fetch the Discussion
 
 Check the argument: `$ARGUMENTS`
