@@ -46,7 +46,11 @@ If `$ARGUMENTS` is empty (no discussion number or URL given), run this triage ph
      - ⚠️ **후속 필요** — someone asked a follow-up or raised a counterpoint with no maintainer response
      - 🔴 **미답변** — no comments at all on a Q&A discussion
      - 💤 **토론 중단** — long period of inactivity with no resolution
-   - **Priority**: 높음 / 중간 / 낮음 / 없음
+   - **Priority** (use emoji for quick visual scanning):
+     - 🔴 **P1** — 즉시 답변 필요 (미답변 Q&A, 긴급 후속 필요)
+     - 🟡 **P2** — 답변 권장 (후속 질문 있음, 불완전한 답변)
+     - 🟢 **P3** — 여유 있음 (토론 중단, 낮은 긴급도)
+     - ⚪ **—** — 답변 불필요 (완료/종료)
    - Brief reason for the status/priority assessment
 5. Let the user pick which discussion to reply to (or confirm none need replies)
 
