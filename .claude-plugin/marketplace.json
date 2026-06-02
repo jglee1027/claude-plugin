@@ -20,6 +20,19 @@
       "keywords": ["github", "issues", "discussions", "workflow", "automation", "pr"],
       "category": "productivity",
       "tags": ["github", "issue-management", "discussions", "pull-request", "workflow"]
+    },
+    {
+      "name": "agent-workflow",
+      "source": "./plugins/agent-workflow",
+      "description": "Multi-agent orchestration workflows — spawn an Agent Team to analyze one topic from multiple perspectives (dev / QA / perf / arch), each in its own split pane",
+      "version": "1.0.0",
+      "author": {
+        "name": "Jonggyu Lee"
+      },
+      "license": "Apache-2.0",
+      "keywords": ["agent-team", "multi-perspective", "orchestration", "parallel", "review", "analysis"],
+      "category": "productivity",
+      "tags": ["agent-team", "multi-perspective", "orchestration", "parallel-agents", "code-review"]
     }
   ]
 }
