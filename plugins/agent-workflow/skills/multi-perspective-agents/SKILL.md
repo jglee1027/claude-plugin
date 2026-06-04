@@ -154,11 +154,16 @@ TeamCreate(
 5. **결과 보고 방법** — "끝나면 leader에게 SendMessage로 150자 요약 + 풀 리포트는 `<artifact-dir>/<name>.md`에 저장"
 
 > 📁 **산출물 디렉터리(`<artifact-dir>`) 선택 규칙** — 팀 spawn 전에 결정해 모든 팀원에게 일관되게 전달.
-> 1. 저장소 안에 `docs/analysis/` 가 이미 있으면 → `docs/analysis/<team-name>/` (저장소에 산출물을 함께 보관)
+> 1. **기본: `<project>/.claude/agent-team/<team-name>/`** — 프로젝트에 종속되면서 git 추적에서 벗어남(`.claude/`는 보통 ignore/로컬 전용). `/tmp`처럼 휘발되지 않아 PR 근거 등 산출물 보존에 적합.
 > 2. 프로젝트 메모리 / CLAUDE.md 가 별도 위치를 지정하면 → 그 위치
-> 3. 그 외에는 → `/tmp/<team-name>/` (임시)
+> 3. 저장소 안에 `docs/analysis/` 가 이미 있고 산출물을 **git에 함께 커밋**하려는 의도가 분명하면 → `docs/analysis/<team-name>/`
+> 4. 그 외 폴백 → `/tmp/<team-name>/` (휘발성 임시)
 >
-> 어떤 경로를 골랐는지 사용자에게 한 줄로 알려주세요 — "산출물: `docs/analysis/<team-name>/`".
+> ⚙️ **디렉터리 준비 (기본 경로 선택 시 필수)** — 팀원에게 경로를 알리기 전에 leader가 직접 처리:
+> 1. `<artifact-dir>` 가 없으면 생성한다. `mkdir -p <project>/.claude/agent-team/<team-name>` 한 줄이면 충분 (상위 `.claude/`·`agent-team/`도 함께 생성됨). 이미 있으면 그대로 사용.
+> 2. **git 비추적 보장** — `git check-ignore -q <project>/.claude/agent-team/.gitkeep || echo not-ignored` 로 확인. 무시되지 않으면 `.gitignore` 에 `.claude/agent-team/` 한 줄을 추가한다 (이미 있으면 건너뜀). `.claude/` 전체가 이미 ignore면 추가 불필요.
+>
+> 어떤 경로를 골랐는지 사용자에게 한 줄로 알려주세요 — "산출물: `.claude/agent-team/<team-name>/`".
 
 예시 (developer):
 
@@ -169,7 +174,7 @@ SendMessage(
   message = "PR opendataloader-pdf#527을 코드 품질·정확성 관점에서 리뷰해주세요. \
   대상: java/.../DocumentProcessor.java:543 근방, CLIMain.processFile. \
   하지 말 것: 코드 수정, 다른 팀원과 직접 의논(이번 라운드는 독립 검토). \
-  산출물: docs/analysis/pr527-review/developer.md (Verdict / Strengths / Concerns(file:line) / Risk). \
+  산출물: .claude/agent-team/pr527-review/developer.md (Verdict / Strengths / Concerns(file:line) / Risk). \
   끝나면 저에게 150자 요약 + 산출물 경로를 SendMessage로 보내주세요."
 )
 ```
