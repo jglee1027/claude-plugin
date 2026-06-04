@@ -25,7 +25,7 @@
       "name": "agent-workflow",
       "source": "./plugins/agent-workflow",
       "description": "Multi-agent orchestration workflows — spawn an Agent Team to analyze one topic from multiple perspectives (dev / QA / perf / arch), each in its own split pane",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "Jonggyu Lee"
       },
