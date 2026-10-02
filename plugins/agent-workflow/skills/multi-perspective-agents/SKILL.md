@@ -1,11 +1,13 @@
 ---
 name: multi-perspective-agents
-description: Use when the user asks for multi-perspective / team-agent analysis of one topic — spawns an Agent Team (TeamCreate + SendMessage) so each perspective runs in its own split pane (one Claude per teammate). Triggers — "다양한 관점", "팀 에이전트", "multi pane", "dev/QA/perf 분리".
+description: Use when the user asks for multi-perspective / team-agent analysis of one topic — spawns named teammates into the session's Agent Team (Agent + name, then SendMessage) so each perspective runs as its own Claude, shown in tmux split panes when teammateMode is tmux/auto. Triggers — "다양한 관점", "팀 에이전트", "multi pane", "dev/QA/perf 분리".
 ---
 
 # 🤝 Multi-Perspective Agents (Agent Team)
 
-> 한 주제를 여러 렌즈로 **동시에** 분석할 때 — `TeamCreate`로 팀을 띄우고 팀원에게 `SendMessage`로 작업을 분배합니다. tmux 분할 창은 Claude Code가 자동으로 관리하므로 `tail -F`를 직접 다룰 필요가 없습니다.
+> 한 주제를 여러 렌즈로 **동시에** 분석할 때 — 세션의 Agent Team에 팀원을 `name`으로 spawn하고 `SendMessage`로 작업을 분배합니다. 분할 창은 Claude Code가 자동으로 관리하므로 `tail -F`를 직접 다룰 필요가 없습니다.
+>
+> ℹ️ **버전 메모 (Claude Code 2.1.x 이후):** `TeamCreate`/`TeamDelete` 도구는 없습니다. 팀은 **세션마다 하나씩 암묵적으로** 생기고, `Agent`의 `team_name` 인자는 무시됩니다. 팀원이 **tmux 분할 창**으로 뜰지 **메인 터미널 안(in-process)** 에서 돌지는 `teammateMode` 설정이 정합니다. 기본값은 `in-process`라서 설정하지 않으면 분할 창이 생기지 않습니다.
 
 ---
 
@@ -27,10 +29,20 @@ description: Use when the user asks for multi-perspective / team-agent analysis 
 | □ | 항목 | 명령 |
 |:-:|:---|:---|
 | ⬜ | Agent Teams 기능 활성화 | 환경변수 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` |
-| ⬜ | 현재 세션이 tmux 안에 있음 | `echo $TMUX` (비어 있지 않아야 함) |
-| ⬜ | 기존 팀 없음 (한 세션 당 한 팀) | `ls ~/.claude/teams/` |
+| ⬜ | 분할 창 표시 모드 | `~/.claude/settings.json` 의 `"teammateMode"` 가 `"tmux"` 또는 `"auto"` (미설정 = `in-process`) |
+| ⬜ | 현재 세션이 tmux 안에 있음 (분할 창을 쓸 때) | `echo $TMUX` (비어 있지 않아야 함) |
+| ⬜ | 세션 팀의 실제 백엔드 | `~/.claude/teams/session-<id앞8자리>/config.json` 의 `backendType` (`in-process`면 이번 세션은 분할 창 없음) |
 
-> ⚠️ 위 항목이 안 맞으면 — 일반 `Agent` 병렬 호출로 폴백하고 사용자에게 사유를 한 줄로 알려주세요.
+판정 규칙:
+
+- **`teammateMode` 미설정 또는 `in-process`** → 팀 기능은 정상 동작하지만 **분할 창은 생기지 않습니다.** 그대로 진행하되 사용자에게 한 줄로 알립니다:
+  ```text
+  ℹ️ 팀원은 메인 터미널 안(in-process)에서 실행됩니다. 분할 창을 원하면 settings.json에 "teammateMode": "tmux"를 넣고 세션을 다시 시작하세요(또는 `claude --teammate-mode tmux`).
+  ```
+- **설정은 `tmux`/`auto`인데 `backendType`이 `in-process`** → 설정이 세션 시작 뒤에 바뀐 경우입니다. 표시 모드는 시작할 때 정해지므로 **세션 재시작**을 안내합니다.
+- **분할 창 미지원 터미널** — VS Code 통합 터미널, Windows Terminal, Ghostty는 자체 분할을 지원하지 않습니다. 그 안에서 tmux를 실행해야 합니다.
+- **`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` 꺼짐** → 일반 `Agent` 병렬 호출로 폴백하고 사유를 한 줄로 알립니다.
+- `settings.json` 은 사용자가 직접 바꾸게 안내합니다(스킬이 임의로 수정하지 않음).
 
 ---
 
@@ -41,9 +53,9 @@ description: Use when the user asks for multi-perspective / team-agent analysis 
      ↓
 [2] 팀원 후보 추천 → AskUserQuestion (사용자가 명시 안 했을 때만)
      ↓
-[3] TeamCreate → 분할 창 자동 분배
+[3] 산출물 디렉터리 준비 (팀은 세션에 이미 있음 — 생성 단계 없음)
      ↓
-[4] 팀원 spawn (Agent + team_name + name) — 모두 한 메시지에서 병렬
+[4] 팀원 spawn (Agent + name) — 모두 한 메시지에서 병렬 (teammateMode=tmux면 분할 창 자동)
      ↓
 [5] SendMessage로 각자에게 렌즈/지시 전달
      ↓
@@ -51,7 +63,7 @@ description: Use when the user asks for multi-perspective / team-agent analysis 
      ↓
 [7] 결과 합성 → REPORT.md
      ↓
-[8] shutdown_request → TeamDelete
+[8] 팀원마다 shutdown_request
 ```
 
 ---
@@ -107,18 +119,11 @@ description: Use when the user asks for multi-perspective / team-agent analysis 
 
 ---
 
-## 🏗️ Step 2 — 팀 생성
+## 🏗️ Step 2 — 팀 (생성 단계 없음)
 
-```text
-TeamCreate(
-  team_name = "<topic-kebab>",         # 예: "pr527-review"
-  agent_type = "lead-reviewer",
-  description = "한 줄 목적 + 결과물"
-)
-```
-
-- 팀명은 **kebab-case**, 충돌 시 `-2`, `-3` 접미사.
-- `~/.claude/teams/<team-name>/config.json` 과 `~/.claude/tasks/<team-name>/` 가 자동 생성됩니다.
+- 팀은 세션 시작 때 `~/.claude/teams/session-<id>/` 로 **자동 생성**됩니다. 리더는 현재 세션(`team-lead`)입니다.
+- 이번 작업의 이름(**`<topic-kebab>`**, 예: `pr527-review`)은 산출물 디렉터리 이름으로만 씁니다. 충돌 시 `-2`, `-3` 접미사.
+- **구버전 호환:** `ToolSearch("select:TeamCreate")` 로 `TeamCreate` 가 발견되는 구버전이면, 예전처럼 `TeamCreate(team_name=..., agent_type="lead-reviewer", description=...)` 로 팀을 만든 뒤 진행하고 Step 7에서 `TeamDelete()` 를 호출합니다. 발견되지 않으면 이 단계를 건너뜁니다.
 
 ---
 
@@ -131,11 +136,11 @@ TeamCreate(
 | 파라미터 | 값 | 비고 |
 |:---|:---|:---|
 | `subagent_type` | `Explore` (읽기 전용) 또는 `general-purpose` (편집 필요) | 페르소나에 맞춰 |
-| `team_name` | Step 2의 팀명 | 필수 |
-| `name` | 페르소나 슬러그 (예: `developer`) | SendMessage에서 이 이름으로 호출 |
+| `name` | 페르소나 슬러그 (예: `developer`) | **필수.** 이름이 있어야 팀원으로 합류하고 SendMessage로 호출 가능 |
 | `description` | 5단어 이내 | UI 표시 |
 | `prompt` | "팀 합류 후 leader의 지시를 기다리라"는 한 줄 안내 | 본 지시는 SendMessage로 |
-| `run_in_background` | **불필요** | 팀원은 자동으로 idle/wake |
+| `team_name` | **넣지 않음** | 현재 버전에서는 무시됨 (구버전에서만 Step 2의 팀명) |
+| `run_in_background` | **넣지 않음** | 팀원은 자동으로 idle/wake |
 
 > 💡 spawn 단계에서는 "팀에 합류하고 대기"라는 짧은 부트스트랩 프롬프트만 줍니다. 실제 작업 지시는 SendMessage로 — 그래야 분할 창에서 사용자가 각 팀원과 직접 대화할 여지가 남습니다.
 
@@ -161,7 +166,8 @@ TeamCreate(
 >
 > ⚙️ **디렉터리 준비 (기본 경로 선택 시 필수)** — 팀원에게 경로를 알리기 전에 leader가 직접 처리:
 > 1. `mkdir -p <project>/.claude/agent-team/<team-name>` 한 줄이면 충분 (상위 `.claude/`·`agent-team/` 도 함께 생성됨). 이미 있으면 그대로 사용.
-> 2. **git 비추적 보장 — `.gitignore` 는 절대 건드리지 않는다.** `.gitignore` 는 저장소에 커밋되어 다른 개발자에게도 퍼지므로, 개인 산출물 규칙을 넣으면 오염이다. 대신 커밋되지 않는 로컬 전용 파일 `.git/info/exclude` 를 쓴다:
+> 2. **git 저장소가 아니면 이 단계를 건너뛴다** (`git rev-parse --git-dir` 실패 시).
+> 3. **git 비추적 보장 — `.gitignore` 는 절대 건드리지 않는다.** `.gitignore` 는 저장소에 커밋되어 다른 개발자에게도 퍼지므로, 개인 산출물 규칙을 넣으면 오염이다. 대신 커밋되지 않는 로컬 전용 파일 `.git/info/exclude` 를 쓴다:
 >    ```bash
 >    git check-ignore -q .claude/agent-team/.gitkeep \
 >      || echo '.claude/agent-team/' >> "$(git rev-parse --git-dir)/info/exclude"
@@ -190,9 +196,10 @@ SendMessage(
 
 - 팀원은 turn이 끝날 때마다 **자동으로 idle 알림**을 보냅니다 → 어시스턴트 conversation에 새 turn으로 도착.
 - ❌ **하지 말 것:** `ls <artifact-dir>`, `tail`, `cat`, `sleep` — 폴링 컨텍스트만 낭비.
-- ✅ 사용자가 직접 다른 팀원 pane으로 이동해 추가 질문하도록 안내:
+- ✅ 사용자가 직접 팀원에게 추가 질문할 수 있도록 표시 모드에 맞춰 안내:
   ```text
-  💡 진행 중에 특정 팀원에게 직접 질문하려면 Shift+Down으로 해당 pane으로 이동하세요.
+  💡 tmux 분할 창: 해당 팀원 pane을 클릭(또는 tmux prefix로 이동)해 직접 질문하세요.
+  💡 in-process: 에이전트 패널에서 ↑↓로 팀원 선택 → Enter로 대화 보기·메시지 보내기 → Esc로 닫기.
   ```
 
 ---
@@ -216,20 +223,22 @@ SendMessage(
 ## 🧹 Step 7 — 정리
 
 ```text
-모든 팀원에게:  SendMessage(message = {"type":"shutdown_request","reason":"complete"})
-모두 종료되면: TeamDelete()
+모든 팀원에게:  SendMessage(to = "<name>", message = {"type":"shutdown_request","reason":"complete"})
+(구버전에서 TeamCreate를 썼다면) 모두 종료된 뒤: TeamDelete()
 ```
 
-> 정리 안 하면 다음 세션에서 "한 세션 당 한 팀" 제약에 걸립니다.
+> 현재 버전에서는 세션 팀이 세션과 함께 끝나므로 `TeamDelete` 가 필요 없습니다. `~/.claude/teams/session-*` 에 지난 세션 폴더가 쌓일 수 있으나, 삭제는 사용자 확인 후에만 합니다.
 
 ---
 
 ## 📺 분할 창 동작 (직접 조작 금지)
 
-- `TeamCreate` 직후 Claude Code가 **자동으로 tmux 창을 분할**하고 각 팀원 pane을 띄웁니다.
+- `teammateMode` 가 `tmux`(또는 tmux 안에서 `auto`)면, 팀원을 spawn할 때 Claude Code가 **자동으로 tmux 창을 분할**해 각 팀원 pane을 띄웁니다.
+- `in-process`(기본값)면 분할 창 없이 메인 터미널의 에이전트 패널에 팀원이 표시됩니다.
 - ❌ `tmux split-window`, `tail -F`, `tmux send-keys` — **이 스킬에서는 직접 호출하지 않습니다.** 자동 관리되는 레이아웃을 깨트립니다.
-- ✅ 사용자가 단축키로 탐색:
-  - `Shift+Down` — 팀원 pane 순환
+- ✅ 탐색:
+  - tmux 분할 창: 팀원 pane 클릭 또는 tmux prefix 이동
+  - in-process: `↑↓` 팀원 선택 · `Enter` 대화 보기/메시지 · `Esc` 닫기 · `x` 팀원 중지
   - `Ctrl+T` — 작업 목록 토글 (tmux prefix 충돌 시 미동작 — 정상)
 
 ---
@@ -244,6 +253,8 @@ SendMessage(
 | "팀원 결과 파일을 미리 cat" | ❌ idle 알림이 자동 도착. 폴링 금지. |
 | "사용자가 팀원을 안 정했으니 그냥 4명 박자" | ❌ 먼저 AskUserQuestion으로 확인. |
 | "주제가 단순한데 일단 팀부터" | ❌ 한 관점이면 단일 `Agent` 호출. |
+| "TeamCreate가 없으니 팀 기능이 안 된다" | ❌ 현재 버전은 세션 팀이 자동 생성됨. `name`으로 spawn하면 팀원이 됨. |
+| "분할 창이 안 뜨니 tmux를 직접 나누자" | ❌ `teammateMode` 설정 문제. 설정 후 세션 재시작을 안내. |
 
 ---
 
@@ -254,8 +265,10 @@ SendMessage(
 | `tail -F` 패널 만들기 | 자동 분할 창이 있음. tail 제거. |
 | 팀원 spawn 시 본 지시를 prompt에 넣기 | 부트스트랩만 — 본 지시는 SendMessage로. |
 | 팀원 이름을 UUID로 부르기 | 항상 `name`(developer 등)으로. |
-| `Agent` 호출에 `run_in_background: true` | 팀 모드에서는 불필요. 자동으로 idle/wake. |
-| 합성 전에 정리(TeamDelete) | 팀원 출력 잃음. REPORT.md 작성 후 정리. |
+| `Agent` 호출에 `run_in_background: true` | 넣지 않음. 팀원은 자동으로 idle/wake. |
+| `Agent` 호출에 `team_name` 지정 | 현재 버전에서는 무시됨. `name`만 지정. |
+| `teammateMode` 미설정인 채로 분할 창 기대 | 기본값은 `in-process`. `"teammateMode": "tmux"` 설정 후 재시작. |
+| 합성 전에 팀원 종료(shutdown_request) | 후속 질문 기회를 잃음. REPORT.md 작성 후 종료. |
 | 5명 이상 추천 | 토큰 비용 폭증. 기본 3–4명. |
 
 ---
@@ -263,6 +276,7 @@ SendMessage(
 ## 📚 실전 사례
 
 - **PR opendataloader-pdf#527 (2026-05-21)** — dev/test/perf/arch 4관점 → 약 2분에 동일 원인(파일 핸들 누수) 수렴. 사용자에게 한 줄 결론 + 표 + must-fix 1건 + follow-up 8건으로 종합 보고.
+- **텀시트 재검토 (2026-10-01, Claude Code 2.1.286)** — 4관점 팀원은 정상 동작했으나 분할 창이 뜨지 않음. 원인: `TeamCreate` 부재(세션 팀 자동 생성) + `teammateMode` 미설정(기본 `in-process`, 팀 config의 `backendType: in-process`). 이 경험으로 사전 점검·Step 2·탐색 안내를 갱신.
 
 ---
 
